@@ -22,7 +22,8 @@ export default function App() {
         </div>
 
         <footer className="mt-10 text-center text-xs text-slate-500">
-          Dummy APY data for layout. Live XRP price via CoinGecko.
+          Live XRP price via CoinGecko · APY data via DefiLlama (fallback to
+          static when offline)
         </footer>
       </div>
     </div>

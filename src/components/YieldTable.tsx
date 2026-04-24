@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { PROTOCOLS, type Protocol, type Risk } from "../data/protocols";
+import { type Protocol, type Risk } from "../data/protocols";
+import { useYields } from "../hooks/useYields";
 import { ProtocolModal } from "./ProtocolModal";
 
 const RISK_STYLES: Record<Risk, string> = {
@@ -18,20 +19,68 @@ function RiskBadge({ risk }: { risk: Risk }) {
   );
 }
 
+function SourceTag({
+  source,
+  loading,
+  error,
+  updatedAt,
+}: {
+  source: "live" | "fallback";
+  loading: boolean;
+  error: string | null;
+  updatedAt: Date | null;
+}) {
+  if (loading) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-500/15 px-2.5 py-0.5 text-xs text-slate-300 ring-1 ring-inset ring-slate-500/30">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400" />
+        Loading…
+      </span>
+    );
+  }
+  if (source === "live") {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs text-emerald-300 ring-1 ring-inset ring-emerald-500/30"
+        title={updatedAt ? `Updated ${updatedAt.toLocaleTimeString()}` : ""}
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        Live · DefiLlama
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs text-amber-300 ring-1 ring-inset ring-amber-500/30"
+      title={error ?? "Using static fallback data"}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+      Estimated · {error ? "API error" : "fallback"}
+    </span>
+  );
+}
+
 export function YieldTable() {
   const [selected, setSelected] = useState<Protocol | null>(null);
+  const { data, loading, error, source, updatedAt } = useYields();
 
   return (
     <section className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10">
-      <header className="flex items-center justify-between p-5 sm:p-6">
+      <header className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
           <h2 className="text-lg font-semibold text-white sm:text-xl">
             Live Yield Comparison
           </h2>
           <p className="text-sm text-slate-400">
-            APY across XRPL DeFi protocols
+            APY across XRP-related DeFi pools
           </p>
         </div>
+        <SourceTag
+          source={source}
+          loading={loading}
+          error={error}
+          updatedAt={updatedAt}
+        />
       </header>
 
       <div className="hidden md:block">
@@ -45,7 +94,7 @@ export function YieldTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {PROTOCOLS.map((p) => (
+            {data.map((p) => (
               <tr key={p.id} className="hover:bg-white/[0.03]">
                 <td className="px-6 py-4 font-medium text-white">{p.name}</td>
                 <td className="px-6 py-4 font-mono text-emerald-300">
@@ -70,7 +119,7 @@ export function YieldTable() {
       </div>
 
       <ul className="divide-y divide-white/5 md:hidden">
-        {PROTOCOLS.map((p) => (
+        {data.map((p) => (
           <li key={p.id} className="space-y-3 p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
